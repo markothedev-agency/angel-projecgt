@@ -1,4 +1,4 @@
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { Container, Flex, Text, TextInput, Button, ScrollArea, Box, Loader } from "@mantine/core";
 import { useState, useEffect } from "react";
 import api from "../../config/axios";
@@ -25,6 +25,7 @@ const channels: Channel[] = [
 ];
 
 export const ServerDetail = () => {
+  const route = useNavigate()
   const { id } = useParams();
   const {user} = useAuth()
   const [messages, setMessages] = useState<Message[]>([]);
@@ -32,6 +33,8 @@ export const ServerDetail = () => {
   const [selectedChannel, setSelectedChannel] = useState<Channel | null>(channels[0]);
   const [socket, setSocket] = useState<any>(null);
   const [loading,setLoading] = useState(false)
+  const [loading1,setLoading1] = useState(false)
+  const [channelsItem,setChanels ]= useState<any>()
 
   const sendMessage = () => {
 
@@ -71,9 +74,23 @@ export const ServerDetail = () => {
       //
     }
   }
+  const getChannels = async()=>{
+
+    try{
+      setLoading1(true)
+      const resp:any = await api.get('/api/channels')
+      setChanels(resp.data.data)
+      setLoading1(false)
+      
+
+    }catch{
+      setLoading1(false)
+    }
+  }
 
   useEffect(() => {
     getServerMessages()
+    getChannels()
   }, []);
 
 
@@ -139,7 +156,7 @@ export const ServerDetail = () => {
         <Text fw={700} size="lg" mb="md">
           Channels
         </Text>
-        {channels.map((channel) => (
+        {channelsItem?.map((channel:any) => (
           <Text
             key={channel.id}
             onClick={() => handleChannelClick(channel)}
@@ -171,7 +188,11 @@ export const ServerDetail = () => {
           <Text fw={700} size="xl">
             Server: {id}
           </Text>
-          <Button color="blue">Server Settings</Button>
+          <Button style={{cursor:'pointer'}} 
+          onClick={()=>{
+            route('/Servers')
+          }}
+          color="blue">Return</Button>
         </Flex>
 
         {/* Chat Area */}

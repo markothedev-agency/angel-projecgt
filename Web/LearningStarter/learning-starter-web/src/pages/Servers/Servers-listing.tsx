@@ -1,4 +1,4 @@
-import { Text } from "@mantine/core";
+import { ActionIcon, Text } from "@mantine/core";
 import { useState, useEffect } from "react";
 import {
   Container,
@@ -17,6 +17,8 @@ import { useNavigate } from "react-router-dom";
 import api from "../../config/axios";
 import { getInitials, useAuth } from "../../authentication/use-auth";
 import { ServerDetail } from "./Server-detail";
+import { FaTrash, FaEdit } from "react-icons/fa";
+import { notifications, showNotification } from "@mantine/notifications";
 
 export interface ServersGetDto {
   id: number;
@@ -37,7 +39,7 @@ export const ServersListing = () => {
   //   { id: 3, name: "Coding Homework", description: "Share coding tips and tricks", initials: "CH" },
   //   { id: 4, name: "Calculus Prodigy", description: "Math Homework help", initials: "CP" },
   // ]);
-  const {servers,setServers} = useAuth()
+  const {servers,setServers,user} = useAuth()
   const [filteredServers, setFilteredServers] = useState<ServersGetDto[]>(servers);
   const [searchQuery, setSearchQuery] = useState("");
   const [isloading,setIsloading] = useState(false);
@@ -62,6 +64,20 @@ export const ServersListing = () => {
     // Navigate to the server's page
     navigate(`/Server-detail/${serverId}`);
   };
+  const handleDelete = async(serverID:number)=>{
+    //
+    try{
+      setIsloading(true)
+      const resp = await api.delete(`/api/server/${serverID}`);
+      const data = resp.data
+      setServers([...servers.filter((d:any)=>d.id!==serverID)])
+      showNotification({ message: "Server Deleted!", color: "red" });
+      setIsloading(false)
+    }catch{
+      showNotification({ message: "Something went wrong!", color: "red" });
+
+    }
+  }
   const getAllServers = async ()=>{
     const response = await api.get('/api/server');
     setIsloading(true)
@@ -161,15 +177,33 @@ export const ServersListing = () => {
                     <Grid>
                       {filteredServers.map((server) => (
                         <Grid.Col span={4} key={server.id}
-                        style={{cursor:'pointer'}}
-                        onClick={()=>{
-                          handleServerClick(server.id)
-                        }}
+                        style={{position:'relative',}}
+                        
                         >
-                          <Card shadow="sm" padding="lg">
+                          <Card shadow="sm" padding="lg"
+                          onClick={e=>{
+                            handleServerClick(server.id)
+                          }}
+                          style={{
+                            cursor:'pointer',
+                          }}
+                          >
                             <Text style={{ fontWeight: 500 }}>{server.name}</Text>
                             <Text style={{ fontSize: "small", color: "dimmed" }}>{server.description}</Text>
                           </Card>
+
+{
+  user?.userName.toLowerCase() ==='admin'?
+  <ActionIcon
+  id={`delete${server.id}`}
+  style={{position:'absolute','bottom':'15px','right':'10px'}}
+  color="red" onClick={e => {
+    handleDelete(server.id)
+  }}>
+<FaTrash />
+</ActionIcon>:''
+}
+
                         </Grid.Col>
                       ))}
                     </Grid>
